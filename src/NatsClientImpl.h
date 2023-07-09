@@ -2,6 +2,9 @@
 #define NATS_CLIENT_IMPL
 
 #include "NatsClient.h"
+
+#include <map>
+#include <string>
 #include <nats/nats.h>
 
 class NatsClientImpl : public NatsClient
@@ -13,7 +16,9 @@ public:
     virtual bool start();
     virtual void stop();
 
-    virtual bool subscribe(const std::string subject);
+    virtual bool subscribe(const std::string subject, void(*cb)(void));
+
+    void onMsg(const std::string subject, const char* msg);
 
 protected:
     bool initialize();
@@ -28,6 +33,8 @@ private:
     ::natsSubscription *m_pSub;
     ::natsStatistics   *m_pStats;
     ::natsMsg          *m_pMsg;
+
+    std::map<std::string, void(*)(void)> m_Callbacks;
 };
 
 #endif // NATS_CLIENT_IMPL

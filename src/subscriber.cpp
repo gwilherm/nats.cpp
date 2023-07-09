@@ -10,6 +10,11 @@ void sigint_handler(int s)
     _running = false;
 }
 
+void onFoo()
+{
+    std::cout << "Got the foo!" << std::endl;
+}
+
 int main(int argc, char **argv)
 {
     signal(SIGINT, sigint_handler);
@@ -18,7 +23,7 @@ int main(int argc, char **argv)
 
     client->start();
 
-    client->subscribe("foo");
+    client->subscribe("foo", onFoo);
 
     while (_running)
     {

@@ -5,13 +5,17 @@
 
 int64_t NatsClientImpl::m_dropped = 0;
 
-static void
-onMsg(natsConnection *nc, natsSubscription *m_pSub, natsMsg *msg, void *closure)
+static void _onMsg(::natsConnection *nc, ::natsSubscription *m_pSub, ::natsMsg *msg, void *closure)
 {
     std::cout << "Received msg: "
                 << ::natsMsg_GetSubject(msg) << " - "
                 << ::natsMsg_GetData(msg)
                 << std::endl;
+    
+    std::string cstr(reinterpret_cast<const char*>(::natsMsg_GetData(msg)), ::natsMsg_GetDataLength(msg));
+
+    NatsClientImpl* _this = (NatsClientImpl *)closure;
+    _this->onMsg(cstr, ::natsMsg_GetData(msg));
 
     ::natsMsg_Destroy(msg);
 }
@@ -49,7 +53,7 @@ bool NatsClientImpl::initialize()
     if (s != NATS_OK)
         std::cerr << "Error: " << s << std::endl;
 
-    s = ::natsOptions_SetErrorHandler(m_pOpts, asyncErrCb, NULL);
+    s = ::natsOptions_SetErrorHandler(m_pOpts, asyncErrCb, this);
     if (s != NATS_OK)
         std::cerr << "Error: " << s << std::endl;
 
@@ -89,20 +93,23 @@ void NatsClientImpl::stop()
     ::nats_Close();
 }
 
-bool NatsClientImpl::subscribe(const std::string subject)
+bool NatsClientImpl::subscribe(const std::string subject, void(*cb)(void))
 {
     std::cout << "Subscribe" << std::endl;
     natsStatus s;
 
     std::cout << "Listening asynchronously on " << subject << std::endl;
 
-    s = ::natsConnection_Subscribe(&m_pSub, m_pConn, subject.c_str(), onMsg, NULL);
+    s = ::natsConnection_Subscribe(&m_pSub, m_pConn, subject.c_str(), _onMsg, NULL);
     if (s != NATS_OK)
         std::cerr << "*Error: " << s << std::endl;
 
     // For maximum performance, set no limit on the number of pending messages.
     if (s == NATS_OK)
+    {
+        m_Callbacks[subject] = cb;
         s = ::natsSubscription_SetPendingLimits(m_pSub, -1, -1);
+    }
 
     if (s != NATS_OK)
         std::cerr << "Error: " << s << std::endl;
@@ -110,4 +117,10 @@ bool NatsClientImpl::subscribe(const std::string subject)
     //     s = ::natsSubscription_AutoUnsubscribe(m_pSub, (int) total);
 
     return (s == NATS_OK);
+}
+
+void NatsClientImpl::onMsg(const std::string subject, const char* msg)
+{
+    std::cout << "Received: " << msg << std::endl;
+    //m_Callbacks[subject](msg);
 }

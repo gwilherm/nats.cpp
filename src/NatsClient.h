@@ -14,7 +14,7 @@ public:
     virtual bool start() = 0;
     virtual void stop() = 0;
 
-    virtual bool subscribe(const std::string subject) = 0;
+    virtual bool subscribe(const std::string subject, void(*cb)(void)) = 0;
 };
 
 #endif // NATS_CLIENT
