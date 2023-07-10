@@ -11,11 +11,9 @@ static void _onMsg(::natsConnection *nc, ::natsSubscription *m_pSub, ::natsMsg *
                 << ::natsMsg_GetSubject(msg) << " - "
                 << ::natsMsg_GetData(msg)
                 << std::endl;
-    
-    std::string cstr(reinterpret_cast<const char*>(::natsMsg_GetData(msg)), ::natsMsg_GetDataLength(msg));
 
     NatsClientImpl* _this = (NatsClientImpl *)closure;
-    _this->onMsg(cstr, ::natsMsg_GetData(msg));
+    _this->onMsg(::natsMsg_GetSubject(msg), ::natsMsg_GetData(msg), ::natsMsg_GetDataLength(msg));
 
     ::natsMsg_Destroy(msg);
 }
@@ -93,21 +91,21 @@ void NatsClientImpl::stop()
     ::nats_Close();
 }
 
-bool NatsClientImpl::subscribe(const std::string subject, void(*cb)(void))
+bool NatsClientImpl::subscribe(const std::string subject, std::function<void(void)> callback)
 {
     std::cout << "Subscribe" << std::endl;
     natsStatus s;
 
     std::cout << "Listening asynchronously on " << subject << std::endl;
 
-    s = ::natsConnection_Subscribe(&m_pSub, m_pConn, subject.c_str(), _onMsg, NULL);
+    s = ::natsConnection_Subscribe(&m_pSub, m_pConn, subject.c_str(), _onMsg, this);
     if (s != NATS_OK)
         std::cerr << "*Error: " << s << std::endl;
 
     // For maximum performance, set no limit on the number of pending messages.
     if (s == NATS_OK)
     {
-        m_Callbacks[subject] = cb;
+        m_Callbacks[subject] = callback;
         s = ::natsSubscription_SetPendingLimits(m_pSub, -1, -1);
     }
 
@@ -119,8 +117,20 @@ bool NatsClientImpl::subscribe(const std::string subject, void(*cb)(void))
     return (s == NATS_OK);
 }
 
-void NatsClientImpl::onMsg(const std::string subject, const char* msg)
+void NatsClientImpl::onMsg(const std::string subject, const char* msg, const size_t msg_len)
 {
     std::cout << "Received: " << msg << std::endl;
-    //m_Callbacks[subject](msg);
+
+    try
+    {
+        auto callback = m_Callbacks.at(subject);
+        if (callback)
+           callback(/*msg, msg_len*/);
+        else
+            std::cerr << "Invalid callback." << std::endl;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "No callback for this subject." << std::endl;
+    }
 }

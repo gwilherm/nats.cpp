@@ -3,9 +3,9 @@
 
 #include "NatsClient.h"
 
-#include <map>
 #include <string>
 #include <nats/nats.h>
+#include <unordered_map>
 
 class NatsClientImpl : public NatsClient
 {
@@ -16,9 +16,9 @@ public:
     virtual bool start();
     virtual void stop();
 
-    virtual bool subscribe(const std::string subject, void(*cb)(void));
+    virtual bool subscribe(const std::string subject, std::function<void(void)> callback);
 
-    void onMsg(const std::string subject, const char* msg);
+    void onMsg(const std::string subject, const char* msg, const size_t msg_len);
 
 protected:
     bool initialize();
@@ -34,7 +34,7 @@ private:
     ::natsStatistics   *m_pStats;
     ::natsMsg          *m_pMsg;
 
-    std::map<std::string, void(*)(void)> m_Callbacks;
+    std::unordered_map<std::string, std::function<void(void)>> m_Callbacks;
 };
 
 #endif // NATS_CLIENT_IMPL

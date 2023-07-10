@@ -2,6 +2,7 @@
 #define NATS_CLIENT
 
 #include <string>
+#include <functional>
 
 class NatsClient
 {
@@ -14,7 +15,7 @@ public:
     virtual bool start() = 0;
     virtual void stop() = 0;
 
-    virtual bool subscribe(const std::string subject, void(*cb)(void)) = 0;
+    virtual bool subscribe(const std::string subject, std::function<void(void)> callback) = 0;
 };
 
 #endif // NATS_CLIENT
