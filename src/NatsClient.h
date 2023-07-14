@@ -7,8 +7,6 @@
 class NatsClient
 {
 public:
-    // NatsClient(const bool statistics = false);
-    // virtual ~NatsClient() = 0;
     // Factory
     static NatsClient* createNatsClient(const bool statistics = false);
 

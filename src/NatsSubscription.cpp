@@ -25,7 +25,7 @@ static void _onMsg(::natsConnection *nc, ::natsSubscription *m_pSub, ::natsMsg *
 NatsSubscription::NatsSubscription(::natsConnection* pConn, std::string subject, std::function<void(std::string)> callback) :
     m_callback(callback)
 {
-    natsStatus s;
+    ::natsStatus s;
 
     s = ::natsConnection_Subscribe(&m_pSub, pConn, subject.c_str(), _onMsg, this);
     if (s != NATS_OK)
