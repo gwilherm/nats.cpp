@@ -70,6 +70,15 @@ void NatsClientImpl::stop()
     // Destroy all our objects to avoid report of memory leak
     if (m_statistics)
         ::natsStatistics_Destroy(m_pStats);
+
+    auto it = m_Subscriptions.begin();
+    while (it != m_Subscriptions.end())
+    {
+        if (it->second != nullptr)
+            delete it->second;
+
+        it = m_Subscriptions.erase(it);
+    }
     ::natsConnection_Destroy(m_pConn);
     ::natsOptions_Destroy(m_pOpts);
 
