@@ -38,5 +38,7 @@ int main(int argc, char **argv)
 
     client->stop();
 
+    delete client;
+
     return 0;
 }
