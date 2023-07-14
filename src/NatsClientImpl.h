@@ -20,7 +20,6 @@ public:
     virtual bool subscribe(const std::string subject, std::function<void(std::string)> callback);
 
 protected:
-    bool initialize();
     static void asyncErrCb(::natsConnection *nc, ::natsSubscription *sub, ::natsStatus err, void *closure);
 
 private:

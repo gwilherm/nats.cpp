@@ -13,8 +13,6 @@ NatsClientImpl::NatsClientImpl(const bool statistics) :
     m_pStats(NULL),
     m_pMsg(NULL)
 {
-    if (!initialize())
-        std::cerr << "Error at initialization" << std::endl;
 }
 
 void NatsClientImpl::asyncErrCb(natsConnection *nc, natsSubscription *m_pSub, natsStatus err, void *closure)
@@ -27,10 +25,10 @@ void NatsClientImpl::asyncErrCb(natsConnection *nc, natsSubscription *m_pSub, na
     ::natsSubscription_GetDropped(m_pSub, (int64_t*) &m_dropped);
 }
 
-
-bool NatsClientImpl::initialize()
+bool NatsClientImpl::start()
 {
-    natsStatus s = NATS_OK;
+    std::cout << "Start" << std::endl;
+    ::natsStatus s = NATS_OK;
 
     if (::natsOptions_Create(&m_pOpts) != NATS_OK)
         s = NATS_NO_MEMORY;
@@ -42,13 +40,6 @@ bool NatsClientImpl::initialize()
     if (s != NATS_OK)
         std::cerr << "Error: " << s << std::endl;
 
-    return (s == NATS_OK);
-}
-
-bool NatsClientImpl::start()
-{
-    std::cout << "Start" << std::endl;
-    natsStatus s;
 
     s = ::natsConnection_Connect(&m_pConn, m_pOpts);
 
